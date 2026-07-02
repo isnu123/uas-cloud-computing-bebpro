@@ -30,6 +30,8 @@ function Login() {
       localStorage.setItem('beb_user_role', userRole);
       navigate('/dashboard');
     }
+    window.dispatchEvent(new Event('storage')); 
+    navigate('/dashboard');
 
     setLoading(false);
   };
