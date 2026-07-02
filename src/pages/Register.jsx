@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../config/supabaseClient';
-import { BsPerson, BsEnvelope, BsLock, BsPeople, BsCheckCircleFill, BsExclamationTriangleFill } from 'react-icons/bs';
+import { BsPerson, BsEnvelope, BsLock, BsCheckCircleFill, BsExclamationTriangleFill } from 'react-icons/bs';
 
 function Register() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState('customer');
+  // 🟢 Kunci mati nilai awal sebagai customer demi keamanan sistem
+  const [role] = useState('customer'); 
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState(null);
   const [errorMsg, setErrorMsg] = useState(null);
@@ -25,7 +26,7 @@ function Register() {
       options: {
         data: {
           name,
-          role
+          role // Terkirim otomatis sebagai 'customer'
         }
       }
     });
@@ -40,7 +41,6 @@ function Register() {
       setName('');
       setEmail('');
       setPassword('');
-      setRole('customer');
     }
 
     setLoading(false);
@@ -71,14 +71,9 @@ function Register() {
           color: #94a3b8 !important;
           opacity: 1 !important;
         }
-        /* Mengubah warna teks autofill chrome */
         .saas-input:-webkit-autofill {
           -webkit-text-fill-color: #ffffff !important;
           -webkit-box-shadow: 0 0 0px 1000px #0f172a inset !important;
-        }
-        /* Mengubah icon panah select */
-        .white-select-icon {
-          background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23ffffff'%3e%3cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708 .708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3e%3c/svg%3e") !important;
         }
         .saas-btn {
           transition: transform 0.1s ease, background-color 0.2s ease !important;
@@ -101,7 +96,7 @@ function Register() {
       >
         <div className="row g-0">
 
-          {/* SISI KIRI: PENJELASAN (AKAN DI ATAS KALAU DI HP) */}
+          {/* SISI KIRI: PENJELASAN */}
           <div
             className="col-12 col-lg-5 d-flex flex-column justify-content-center p-4 p-md-5 text-white"
             style={{
@@ -187,7 +182,7 @@ function Register() {
                 </div>
 
                 {/* PASSWORD */}
-                <div className="mb-3">
+                <div className="mb-4">
                   <label className="form-label small fw-semibold mb-2" style={{ color: '#e2e8f0' }}>
                     <BsLock className="me-2 text-danger" /> Password
                   </label>
@@ -201,20 +196,7 @@ function Register() {
                   />
                 </div>
 
-                {/* DAFTAR SEBAGAI */}
-                <div className="mb-4">
-                  <label className="form-label small fw-semibold mb-2" style={{ color: '#e2e8f0' }}>
-                    <BsPeople className="me-2 text-danger" /> Daftar Sebagai
-                  </label>
-                  <select
-                    className="form-select saas-input white-select-icon"
-                    value={role}
-                    onChange={(e) => setRole(e.target.value)}
-                  >
-                    <option value="customer" style={{ backgroundColor: '#1e293b' }}>Customer / Pelanggan</option>
-                    <option value="admin" style={{ backgroundColor: '#1e293b' }}>Admin / Crew Lapangan</option>
-                  </select>
-                </div>
+                {/* 🔒 INPUT DROPDOWN ROLE TELAH DIHAPUS DEMI KEAMANAN AKSES */}
 
                 <button
                   type="submit"
