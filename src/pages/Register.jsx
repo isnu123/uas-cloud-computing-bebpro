@@ -1,17 +1,23 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../config/supabaseClient';
-import { BsPerson, BsEnvelope, BsLock, BsCheckCircleFill, BsExclamationTriangleFill } from 'react-icons/bs';
+// 🟢 Menambahkan BsEye dan BsEyeSlash untuk fitur intip password
+import { BsPerson, BsEnvelope, BsLock, BsCheckCircleFill, BsExclamationTriangleFill, BsEye, BsEyeSlash } from 'react-icons/bs';
 
 function Register() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  // 🟢 Kunci mati nilai awal sebagai customer demi keamanan sistem
-  const [role] = useState('customer'); 
+  // 🟢 State baru untuk kolom Konfirmasi Password
+  const [confirmPassword, setConfirmPassword] = useState(''); 
+  const [role] = useState('customer'); // Kunci mati nilai awal sebagai customer[cite: 5]
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState(null);
   const [errorMsg, setErrorMsg] = useState(null);
+
+  // 🟢 State untuk kontrol visibility masing-masing kolom password
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleRegister = async (e) => {
     e.preventDefault();
@@ -20,13 +26,20 @@ function Register() {
     setMessage(null);
     setErrorMsg(null);
 
+    // 🟢 VALIDASI MUTLAK: Pastikan kedua password sama sebelum dikirim ke Supabase
+    if (password !== confirmPassword) {
+      setErrorMsg('Password dan Konfirmasi Password tidak cocok!');
+      setLoading(false);
+      return;
+    }
+
     const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         data: {
           name,
-          role // Terkirim otomatis sebagai 'customer'
+          role // Terkirim otomatis sebagai 'customer'[cite: 5]
         }
       }
     });
@@ -41,6 +54,7 @@ function Register() {
       setName('');
       setEmail('');
       setPassword('');
+      setConfirmPassword(''); // Reset kolom konfirmasi password
     }
 
     setLoading(false);
@@ -74,6 +88,25 @@ function Register() {
         .saas-input:-webkit-autofill {
           -webkit-text-fill-color: #ffffff !important;
           -webkit-box-shadow: 0 0 0px 1000px #0f172a inset !important;
+        }
+        .password-toggle-btn {
+          background-color: #0f172a !important;
+          border: 1px solid rgba(255, 255, 255, 0.15) !important;
+          border-left: none !important;
+          color: #94a3b8 !important;
+          transition: color 0.2s ease;
+        }
+        .password-toggle-btn:hover {
+          color: #ef4444 !important;
+        }
+        /* Siasat agar border input radiusnya rapi menyatu dengan tombol mata */
+        .input-group > .saas-input {
+          border-top-right-radius: 0px !important;
+          border-bottom-right-radius: 0px !important;
+        }
+        .input-group > .password-toggle-btn {
+          border-top-right-radius: 16px !important;
+          border-bottom-right-radius: 16px !important;
         }
         .saas-btn {
           transition: transform 0.1s ease, background-color 0.2s ease !important;
@@ -181,22 +214,53 @@ function Register() {
                   />
                 </div>
 
-                {/* PASSWORD */}
-                <div className="mb-4">
+                {/* PASSWORD UTAMA */}
+                <div className="mb-3">
                   <label className="form-label small fw-semibold mb-2" style={{ color: '#e2e8f0' }}>
                     <BsLock className="me-2 text-danger" /> Password
                   </label>
-                  <input
-                    type="password"
-                    className="form-control saas-input"
-                    placeholder="Minimal 6 karakter"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                  />
+                  <div className="input-group">
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      className="form-control saas-input"
+                      placeholder="Minimal 6 karakter"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                    />
+                    <button
+                      type="button"
+                      className="btn password-toggle-btn d-flex align-items-center justify-content-center px-3"
+                      onClick={() => setShowPassword(!showPassword)}
+                    >
+                      {showPassword ? <BsEyeSlash size={18} /> : <BsEye size={18} />}
+                    </button>
+                  </div>
                 </div>
 
-                {/* 🔒 INPUT DROPDOWN ROLE TELAH DIHAPUS DEMI KEAMANAN AKSES */}
+                {/* 🟢 KOLOM BARU: KONFIRMASI PASSWORD */}
+                <div className="mb-4">
+                  <label className="form-label small fw-semibold mb-2" style={{ color: '#e2e8f0' }}>
+                    <BsLock className="me-2 text-danger" /> Konfirmasi Password
+                  </label>
+                  <div className="input-group">
+                    <input
+                      type={showConfirmPassword ? "text" : "password"}
+                      className="form-control saas-input"
+                      placeholder="Ulangi password Anda"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      required
+                    />
+                    <button
+                      type="button"
+                      className="btn password-toggle-btn d-flex align-items-center justify-content-center px-3"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    >
+                      {showConfirmPassword ? <BsEyeSlash size={18} /> : <BsEye size={18} />}
+                    </button>
+                  </div>
+                </div>
 
                 <button
                   type="submit"
