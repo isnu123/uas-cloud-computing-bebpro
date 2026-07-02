@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { supabase } from '../config/supabaseClient';
 import Sidebar from '../components/Sidebar';
-import { BsCalendarEvent, BsGeoAlt, BsCreditCard, BsCloudUpload, BsInfoCircle } from 'react-icons/bs';
+import { BsCalendarEvent, BsGeoAlt, BsCreditCard, BsCloudUpload, BsInfoCircle, BsLightningCharge } from 'react-icons/bs';
 
 function BookingCustomers() {
   const location = useLocation();
@@ -148,16 +148,22 @@ function BookingCustomers() {
         {message && <div className="alert bg-success-subtle text-success border border-success mb-4 rounded-3 small fw-bold">{message}</div>}
         {errorMsg && <div className="alert bg-danger-subtle text-danger border border-danger mb-4 rounded-3 small fw-bold">⚠️ {errorMsg}</div>}
 
-        <div className="row g-4">
-          <div className="col-lg-7">
-            <div className="card shadow border-0 rounded-4 text-white h-100" style={{ background: '#1e293b', border: '1px solid rgba(255,255,255,0.05)' }}>
-              <div className="card-body p-4">
-                <form onSubmit={handleBookingSubmit}>
+        {/* 🟢 FORM SEKARANG MEMBUNGKUS SELURUH GRID HINGGA TOMBOL BAWAH */}
+        <form onSubmit={handleBookingSubmit}>
+          <div className="row g-4">
+            
+            {/* PANEL KIRI: DETAIL JADWAL & LOKASI */}
+            <div className="col-lg-7">
+              <div className="card shadow border-0 rounded-4 text-white h-100" style={{ background: '#1e293b', border: '1px solid rgba(255,255,255,0.05)' }}>
+                <div className="card-body p-4">
+                  <h5 className="fw-bold mb-4 small text-uppercase tracking-wider" style={{ color: '#ef4444' }}>
+                    <BsCalendarEvent className="me-2" /> 1. Detail Jadwal Dokumentasi
+                  </h5>
                   
                   {/* Select Paket Layanan */}
                   <div className="mb-3">
                     <label className="form-label small fw-bold text-light">
-                      <BsCalendarEvent className="me-2 text-danger" /> Pilih Paket Dokumentasi
+                      Pilih Paket Dokumentasi
                     </label>
                     <select
                       className="form-select bg-dark text-white border-secondary rounded-3 white-icons-select"
@@ -191,13 +197,13 @@ function BookingCustomers() {
                   </div>
 
                   {/* Textarea Lokasi */}
-                  <div className="mb-4">
+                  <div className="mb-2">
                     <label className="form-label small fw-bold text-light">
                       <BsGeoAlt className="me-2 text-danger" /> Lokasi Lengkap Acara / Gedung
                     </label>
                     <textarea
                       className="form-control bg-dark text-white border-secondary rounded-3"
-                      rows="3"
+                      rows="4"
                       style={{ resize: 'none' }}
                       placeholder="Contoh: Dusun Karanganyar, Karangtengah, Wonogiri"
                       value={lokasi}
@@ -205,69 +211,93 @@ function BookingCustomers() {
                       required
                     ></textarea>
                   </div>
+                </div>
+              </div>
+            </div>
 
-                  <button type="submit" className="btn btn-danger w-100 py-2.5 rounded-3 fw-bold" disabled={loading || packages.length === 0}>
-                    {loading ? 'Mengunci Jadwal & Mengunggah Berkas...' : 'Kunci & Kirim Jadwal Booking'}
-                  </button>
-                </form>
+            {/* PANEL KANAN: INVOICE & UPLOAD BUKTI */}
+            <div className="col-lg-5">
+              <div className="card shadow border-0 rounded-4 text-white h-100" style={{ background: '#1e293b', border: '1px solid rgba(255,255,255,0.05)' }}>
+                <div className="card-body p-4 d-flex flex-column justify-content-between">
+                  <div>
+                    <h5 className="fw-bold mb-3 small text-uppercase tracking-wider" style={{ color: '#ef4444' }}>
+                      <BsCreditCard className="me-2" /> 2. Invoice Transfer Bank
+                    </h5>
+                    
+                    <div className="bg-dark p-3 rounded-3 border border-secondary mb-3 text-center">
+                      <small className="d-block text-uppercase tracking-wider font-monospace" style={{ color: '#94a3b8', fontSize: '11px' }}>Total Tagihan Administrasi</small>
+                      <h3 className="fw-bold m-0 text-danger mt-1">Rp{parseFloat(totalBayar).toLocaleString('id-ID')}</h3>
+                    </div>
+
+                    <div className="mb-3">
+                      <label className="form-label small fw-bold text-light">Rekening Tujuan Mitra BEB Production</label>
+                      <select className="form-select bg-dark text-white border-secondary rounded-3 mb-2 white-icons-select" value={bankTujuan} onChange={(e) => setBankTujuan(e.target.value)}>
+                        <option value="seabank">SeaBank (Digital Retail Merchant)</option>
+                        <option value="dana">DANA Instant E-Wallet</option>
+                      </select>
+
+                      <div className="p-2.5 bg-dark rounded-3 border border-dashed border-secondary">
+                        {bankTujuan === 'seabank' ? (
+                          <>
+                            <small className="d-block font-monospace" style={{ color: '#94a3b8', fontSize: '11px' }}>NOMOR REKENING SEABANK (ARDCELL RETAIL):</small>
+                            <span className="fw-bold text-white fs-5 font-monospace">9012-3456-7890</span>
+                            <small className="d-block text-light mt-0.5">a.n. Isnu Ardianto</small>
+                          </>
+                        ) : (
+                          <>
+                            <small className="d-block font-monospace" style={{ color: '#94a3b8', fontSize: '11px' }}>NOMOR AKUN DANA BUSINESS:</small>
+                            <span className="fw-bold text-white fs-5 font-monospace">0821-3456-7890</span>
+                            <small className="d-block text-light mt-0.5">a.n. BEB Production Billing</small>
+                          </>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="mb-0">
+                      <label className="form-label small fw-bold text-light"><BsCloudUpload className="me-2 text-danger" /> Unggah Foto Bukti Transfer (Wajib)</label>
+                      <input type="file" accept="image/*" className="form-control bg-dark text-white border-secondary rounded-3" onChange={(e) => setBuktiBayarFile(e.target.files[0])} required />
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
 
-          <div className="col-lg-5">
-            <div className="card shadow border-0 rounded-4 text-white h-100" style={{ background: '#1e293b', border: '1px solid rgba(255,255,255,0.05)' }}>
-              <div className="card-body p-4 d-flex flex-column justify-content-between">
+          {/* 🟢 PANEL BAWAH UTAMA: TOMBOL KIRIM MEMANJANG MAKSIMAL */}
+          <div className="mt-4 p-4 rounded-4 shadow-sm text-white" style={{ background: '#1e293b', border: '1px solid rgba(255,255,255,0.05)' }}>
+            <div className="row align-items-center g-3">
+              <div className="col-md-8 d-flex gap-3 align-items-start">
+                <BsInfoCircle size={22} className="text-danger flex-shrink-0 mt-1" />
                 <div>
-                  <h5 className="fw-bold mb-3 small text-uppercase tracking-wider" style={{ color: '#ef4444' }}>
-                    <BsCreditCard className="me-2" /> Invoice Transfer Bank
-                  </h5>
-                  
-                  <div className="bg-dark p-3 rounded-3 border border-secondary mb-4 text-center">
-                    {/* Perbaikan Teks Tagihan Terang Kontras */}
-                    <small className="d-block text-uppercase tracking-wider font-monospace" style={{ color: '#94a3b8', fontSize: '11px' }}>Total Tagihan Administrasi</small>
-                    <h3 className="fw-bold m-0 text-danger mt-1">Rp{parseFloat(totalBayar).toLocaleString('id-ID')}</h3>
-                  </div>
-
-                  <div className="mb-4">
-                    <label className="form-label small fw-bold text-light">Rekening Tujuan Mitra BEB Production</label>
-                    <select className="form-select bg-dark text-white border-secondary rounded-3 mb-3 white-icons-select" value={bankTujuan} onChange={(e) => setBankTujuan(e.target.value)}>
-                      <option value="seabank">SeaBank (Digital Retail Merchant)</option>
-                      <option value="dana">DANA Instant E-Wallet</option>
-                    </select>
-
-                    <div className="p-3 bg-dark rounded-3 border border-dashed border-secondary">
-                      {bankTujuan === 'seabank' ? (
-                        <>
-                          <small className="d-block font-monospace" style={{ color: '#94a3b8', fontSize: '11px' }}>NOMOR REKENING SEABANK (ARDCELL RETAIL):</small>
-                          <span className="fw-bold text-white fs-5 font-monospace">9012-3456-7890</span>
-                          <small className="d-block text-light mt-1">a.n. Isnu Ardianto</small>
-                        </>
-                      ) : (
-                        <>
-                          <small className="d-block font-monospace" style={{ color: '#94a3b8', fontSize: '11px' }}>NOMOR AKUN DANA BUSINESS:</small>
-                          <span className="fw-bold text-white fs-5 font-monospace">0821-3456-7890</span>
-                          <small className="d-block text-light mt-1">a.n. BEB Production Billing</small>
-                        </>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="mb-3">
-                    <label className="form-label small fw-bold text-light"><BsCloudUpload className="me-2 text-danger" /> Unggah Foto Bukti Transfer (Wajib)</label>
-                    <input type="file" accept="image/*" className="form-control bg-dark text-white border-secondary rounded-3" onChange={(e) => setBuktiBayarFile(e.target.files[0])} required />
-                  </div>
-                </div>
-
-                <div className="mt-4 pt-3 border-top border-secondary d-flex gap-2 align-items-start text-muted" style={{ fontSize: '12px' }}>
-                  <BsInfoCircle size={18} className="text-danger flex-shrink-0 mt-0.5" />
-                  <p className="m-0" style={{ color: '#94a3b8', lineHeight: '1.5' }}>
-                    Sistem otomasi n8n terintegrasi akan mendeteksi invoice masuk ini dan menembakkan pesan log ringkasan langsung ke grup internal Telegram kru BEB Production secara real-time.
+                  <h6 className="m-0 fw-bold text-white">Sistem Otomasi Real-time Cloud</h6>
+                  <p className="m-0 mt-1 small" style={{ color: '#94a3b8', lineHeight: '1.5' }}>
+                    Begitu Anda menekan tombol kirim, webhook Supabase akan memicu terowongan n8n & Ngrok untuk mengirim ringkasan detail pesanan Anda ke grup internal Telegram kru BEB Production secara instan.
                   </p>
                 </div>
               </div>
+              <div className="col-md-4 text-md-end">
+                <button 
+                  type="submit" 
+                  className="btn btn-danger w-100 py-3 rounded-3 fw-bold d-flex align-items-center justify-content-center gap-2 shadow saas-btn" 
+                  disabled={loading || packages.length === 0}
+                  style={{ fontSize: '16px' }}
+                >
+                  {loading ? (
+                    <>
+                      <div className="spinner-border spinner-border-sm" role="status"></div>
+                      <span>Mengunci & Mengunggah...</span>
+                    </>
+                  ) : (
+                    <>
+                      <BsLightningCharge />
+                      <span>Kunci & Kirim Jadwal Booking</span>
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
+        </form>
 
       </div>
     </div>
