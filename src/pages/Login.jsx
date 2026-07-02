@@ -1,15 +1,18 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../config/supabaseClient';
-import { BsEnvelope, BsLock, BsLightningCharge, BsArrowRightShort } from 'react-icons/bs';
+// 🟢 Menambahkan BsEye dan BsEyeSlash untuk fitur intip password
+import { BsEnvelope, BsLock, BsLightningCharge, BsArrowRightShort, BsEye, BsEyeSlash } from 'react-icons/bs';
 
-function Login() {
+function Login({ onLoginSuccess }) {
   const navigate = useNavigate();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState(null);
+  // 🟢 State baru untuk memantau apakah password sedang diperlihatkan atau disembunyikan
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -24,16 +27,25 @@ function Login() {
 
     if (error) {
       setErrorMsg(error.message);
+      setLoading(false);
     } else {
       // Menyimpan role di localStorage jika ada metadata role, default ke customer
       const userRole = data?.user?.user_metadata?.role || 'customer';
       localStorage.setItem('beb_user_role', userRole);
-      navigate('/dashboard');
-    }
-    window.dispatchEvent(new Event('storage')); 
-    navigate('/dashboard');
+      
+      // 🟢 PEMBARUAN UTAMA: Memicu event agar App.jsx memperbarui state role secara realtime
+      window.dispatchEvent(new Event('storage')); 
+      
+      if (typeof onLoginSuccess === 'function') {
+        onLoginSuccess();
+      }
 
-    setLoading(false);
+      // 🟢 Beri jeda 100ms agar sistem App.jsx selesai mengubah state role ke admin sebelum halaman berpindah
+      setTimeout(() => {
+        navigate('/dashboard');
+        setLoading(false);
+      }, 100);
+    }
   };
 
   return (
@@ -41,6 +53,39 @@ function Login() {
       className="min-vh-100 d-flex align-items-center justify-content-center p-2 p-sm-3"
       style={{ backgroundColor: '#111827' }} translate="no"
     >
+      {/* CSS internal tambahan untuk merapikan input-group dan ikon mata rahasia */}
+      <style>{`
+        .login-input {
+          background-color: #0f172a !important;
+          color: #ffffff !important;
+          border: 1px solid rgba(255, 255, 255, 0.15) !important;
+          border-radius: 8px !important;
+        }
+        .login-input:focus {
+          border-color: #ef4444 !important;
+          box-shadow: 0 0 0 0.25rem rgba(239, 68, 68, 0.25) !important;
+        }
+        .password-toggle-btn {
+          background-color: #0f172a !important;
+          border: 1px solid rgba(255, 255, 255, 0.15) !important;
+          border-left: none !important;
+          color: #94a3b8 !important;
+          transition: color 0.2s ease;
+        }
+        .password-toggle-btn:hover {
+          color: #ef4444 !important;
+        }
+        /* Siasat agar border input radiusnya rapi menyatu dengan tombol mata */
+        .input-group > .login-input {
+          border-top-right-radius: 0px !important;
+          border-bottom-right-radius: 0px !important;
+        }
+        .input-group > .password-toggle-btn {
+          border-top-right-radius: 8px !important;
+          border-bottom-right-radius: 8px !important;
+        }
+      `}</style>
+
       <div
         className="card border-0 shadow-lg rounded-4 overflow-hidden my-3"
         style={{
@@ -52,7 +97,7 @@ function Login() {
       >
         <div className="row g-0 flex-column-reverse flex-lg-row">
 
-          {/* PANEL KIRI: BRANDING HERO (Akan pindah ke bawah jika di HP agar user fokus ke Form Login dulu) */}
+          {/* PANEL KIRI: BRANDING HERO */}
           <div
             className="col-lg-6 d-flex flex-column justify-content-center p-4 p-md-5 text-white position-relative"
             style={{
@@ -144,14 +189,25 @@ function Login() {
                     Password
                   </label>
 
-                  <input
-                    type="password"
-                    className="form-control login-input py-2"
-                    placeholder="Masukkan password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                  />
+                  {/* 🟢 Dibungkus Menggunakan Input Group Bootstrap */}
+                  <div className="input-group">
+                    <input
+                      type={showPassword ? "text" : "password"} // Jika true bertipe text, jika false bertipe password
+                      className="form-control login-input py-2"
+                      placeholder="Masukkan password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                    />
+                    {/* Tombol interaktif untuk mengubah status penampakan password */}
+                    <button
+                      type="button"
+                      className="btn password-toggle-btn d-flex align-items-center justify-content-center px-3"
+                      onClick={() => setShowPassword(!showPassword)}
+                    >
+                      {showPassword ? <BsEyeSlash size={18} /> : <BsEye size={18} />}
+                    </button>
+                  </div>
                 </div>
 
                 {/* SUBMIT BUTTON */}
