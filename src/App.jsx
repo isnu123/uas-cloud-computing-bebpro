@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 
 import Register from './pages/Register';
@@ -5,7 +6,7 @@ import Login from './pages/Login';
 import DashboardAdmin from './pages/DashboardAdmin'; 
 import DashboardCustomers from './pages/DashboardCustomers'; 
 
-// 🟢 BAGIAN YANG DIPERBARUI SESUAI NAMA FILE BARU:
+//BAGIAN YANG DIPERBARUI SESUAI NAMA FILE BARU:
 import ManajemenInventori from './pages/ManajemenInventori';
 import PesananJasa from './pages/PesananJasa';
 import LaporanAnalitik from './pages/LaporanAnalitik';
@@ -17,7 +18,23 @@ import BookingAdmin from './pages/BookingAdmin';
 import BookingCustomers from './pages/BookingCustomers';
 
 function App() {
-  const role = localStorage.getItem('beb_user_role') || 'customer';
+  // KUNCI 1: Ubah role menjadi useState agar reaktif mendeteksi perubahan login
+  const [role, setRole] = useState(localStorage.getItem('beb_user_role') || 'customer');
+
+  // KUNCI 2: Gunakan useEffect untuk memantau perubahan localStorage secara berkala/realtime
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const currentRole = localStorage.getItem('beb_user_role') || 'customer';
+      setRole(currentRole);
+    };
+
+    // Jalankan pengecekan setiap kali komponen dimuat
+    handleStorageChange();
+
+    // Event listener bawaan browser untuk memantau jika ada aktivitas login/logout
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
 
   return (
     <Router>
@@ -25,7 +42,8 @@ function App() {
         <Routes>
           <Route path="/" element={<Navigate to="/login" />} />
           <Route path="/register" element={<Register />} />
-          <Route path="/login" element={<Login />} />
+          {/* KUNCI 3: Kirim fungsi setRole ke komponen Login agar ketika sukses login, role langsung berubah instan */}
+          <Route path="/login" element={<Login onLoginSuccess={() => setRole(localStorage.getItem('beb_user_role'))} />} />
 
           <Route path="/dashboard" element={role === 'admin' ? <DashboardAdmin /> : <DashboardCustomers />} />
           
