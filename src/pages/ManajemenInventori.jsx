@@ -1,6 +1,11 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../config/supabaseClient';
 import Sidebar from '../components/Sidebar';
+// Mengimpor ikon PDF dari react-icons
+import { BsFileEarmarkPdfFill } from 'react-icons/bs';
+// Mengimpor generator PDF
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 function Inventory() {
   const [items, setItems] = useState([]);
@@ -41,6 +46,61 @@ function Inventory() {
       .order('id', { ascending: false });
     if (!error && data) {
       setItems(data);
+    }
+  };
+
+// 🟢 FUNGSI CETAK PDF (Sudah Dilapisi Pengaman Anti-Mogok)
+  const handleExportPDF = () => {
+    // 1. Validasi jika data masih kosong
+    if (!items || items.length === 0) {
+      alert("Tidak ada data inventori yang bisa dicetak saat ini!");
+      return;
+    }
+
+    try {
+      const doc = new jsPDF();
+      
+      // Desain Header Dokumen Laporan
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(18);
+      doc.text("BEB PRODUCTION", 14, 20);
+      
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "normal");
+      doc.text("Laporan Resmi Data Inventori Logistik & Peralatan", 14, 26);
+      doc.text(`Tanggal Cetak: ${new Date().toLocaleDateString('id-ID')}`, 14, 32);
+      
+      // Membuat Garis Pembatas Estetis Merah
+      doc.setLineWidth(0.5);
+      doc.setDrawColor(239, 68, 68); 
+      doc.line(14, 36, 196, 36);
+
+      // Pemetaan Data dengan ekstra proteksi jika ada kolom null di Supabase
+      const tableRows = items.map((item) => [
+        item.nama_alat ? item.nama_alat : '-',
+        item.kategori ? item.kategori : 'General',
+        item.jumlah ? `${item.jumlah} Unit` : '0 Unit',
+        item.status ? String(item.status).toUpperCase() : 'TERSEDIA' // Aman dari eror toUpperCase()
+      ]);
+
+const tableHeaders = [['Nama Peralatan', 'Kategori', 'Kuantitas', 'Status Kondisi']];
+
+      // 🟢 GANTI BAGIAN INI: Gunakan fungsi autoTable secara langsung
+      autoTable(doc, {
+        startY: 42,
+        head: tableHeaders,
+        body: tableRows,
+        headStyles: { fillColor: [15, 23, 42], textColor: [255, 255, 255] },
+        styles: { font: "helvetica", fontSize: 10 },
+        alternateRowStyles: { fillColor: [248, 250, 252] }
+      });
+
+      // Mengunduh File langsung ke laptop
+      doc.save(`Laporan_Inventori_BEB_Production_${Date.now()}.pdf`);
+
+    } catch (error) {
+      console.error("Detail Eror Cetak PDF:", error);
+      alert("Gagal mencetak PDF. Silakan cek tab Console untuk detail eror: " + error.message);
     }
   };
 
@@ -134,7 +194,6 @@ function Inventory() {
 
   return (
     <div className="d-flex min-vh-100" style={{ backgroundColor: '#111827' }}>
-      {/* CSS Injection khusus untuk menangani warna Placeholder input dan text pudar */}
       <style>{`
         .custom-placeholder::placeholder {
           color: #94a3b8 !important;
@@ -146,11 +205,25 @@ function Inventory() {
 
       <div className="flex-grow-1 p-4 text-white overflow-auto" style={{ maxHeight: '100vh' }}>
         
-        {/* Header Dashboard */}
-        <div className="mb-4 pb-3" style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
-          <h2 className="fw-bold m-0 text-white">Manajemen <span style={{ color: '#ef4444' }}>Inventori</span> Alat</h2>
-          {/* Perbaikan: Mengubah text-muted menjadi warna abu-abu terang agar terbaca */}
-          <p className="m-0 mt-1" style={{ color: '#cbd5e1', fontSize: '14px' }}>Kelola, perbarui status, dan monitor seluruh perangkat produksi sirkuit BEB Production.</p>
+        {/* Header Dashboard Dengan Tombol Cetak PDF */}
+        <div className="mb-4 pb-3 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3" style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+          <div>
+            <h2 className="fw-bold m-0 text-white">Manajemen <span style={{ color: '#ef4444' }}>Inventori</span> Alat</h2>
+            <p className="m-0 mt-1" style={{ color: '#cbd5e1', fontSize: '14px' }}>Kelola, perbarui status, dan monitor seluruh perangkat produksi sikit BEB Production.</p>
+          </div>
+          
+          {/* TOMBOL AKSI: CETAK PDF SEKARANG */}
+          <div>
+            <button 
+              type="button"
+              onClick={handleExportPDF} 
+              className="btn btn-danger py-2.5 px-4 rounded-3 fw-bold d-flex align-items-center gap-2 shadow"
+              style={{ fontSize: '14px' }}
+            >
+              <BsFileEarmarkPdfFill size={18} />
+              <span>Cetak Laporan PDF</span>
+            </button>
+          </div>
         </div>
 
         {/* Card Form Tambah Alat */}
@@ -210,12 +283,11 @@ function Inventory() {
           </div>
         </div>
 
-        {/* Tabel Data Minimalis & Profesional */}
+        {/* Tabel Data Minimalis Terbuka */}
         <div className="card shadow border-0 rounded-4 overflow-hidden" style={{ background: '#1e293b' }}>
           <div className="card-body p-0">
             <div className="table-responsive">
               <table className="table table-dark table-hover align-middle mb-0">
-                {/* Cari bagian ini di dalam file Inventory.jsx Anda dan ganti menjadi: */}
                 <thead style={{ background: '#0f172a' }}>
                   <tr>
                     <th className="px-4 py-3 small fw-bold text-uppercase text-danger" style={{ letterSpacing: '0.5px' }}>Nama Alat Kelengkapan</th>
@@ -244,10 +316,10 @@ function Inventory() {
                         <td className="fw-semibold text-light">{item.jumlah} Unit</td>
                         <td>{renderStatusBadge(item.status)}</td>
                         <td className="text-center">
-                          <button onClick={() => openEditModal(item)} className="btn btn-sm btn-outline-light border-0 me-2 fw-semibold px-2">
+                          <button type="button" onClick={() => openEditModal(item)} className="btn btn-sm btn-outline-light border-0 me-2 fw-semibold px-2">
                             Edit
                           </button>
-                          <button onClick={() => handleDeleteItem(item.id)} className="btn btn-sm btn-outline-danger border-0 fw-semibold px-2">
+                          <button type="button" onClick={() => handleDeleteItem(item.id)} className="btn btn-sm btn-outline-danger border-0 fw-semibold px-2">
                             Hapus
                           </button>
                         </td>
