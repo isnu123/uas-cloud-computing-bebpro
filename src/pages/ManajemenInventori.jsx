@@ -1,10 +1,8 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../config/supabaseClient';
 import Sidebar from '../components/Sidebar';
-// Mengimpor ikon PDF dari react-icons
-import { BsFileEarmarkPdfFill } from 'react-icons/bs';
-// Mengimpor generator PDF
-import jsPDF from 'jspdf';
+import { BsFileEarmarkPdfFill, BsBoxSeam, BsCheckCircleFill, BsExclamationTriangleFill, BsPieChartFill } from 'react-icons/bs';
+import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
 function Inventory() {
@@ -38,7 +36,6 @@ function Inventory() {
     fetchInventoryData();
   }, []);
 
-  // Fungsi pembantu untuk memuat ulang data tabel setelah aksi
   const refreshTableData = async () => {
     const { data, error } = await supabase
       .from('inventory')
@@ -49,9 +46,16 @@ function Inventory() {
     }
   };
 
-// 🟢 FUNGSI CETAK PDF (Sudah Dilapisi Pengaman Anti-Mogok)
+  // 📊 KALKULASI STATISTIK OTOMATIS
+  const totalAlat = items.reduce((acc, item) => acc + (parseInt(item.jumlah) || 0), 0);
+  const totalTersedia = items.filter(item => item.status?.toLowerCase() === 'tersedia').reduce((acc, item) => acc + (parseInt(item.jumlah) || 0), 0);
+  const totalMogok = items.filter(item => item.status?.toLowerCase() === 'rusak' || item.status?.toLowerCase() === 'perbaikan').reduce((acc, item) => acc + (parseInt(item.jumlah) || 0), 0);
+
+  // 📐 KALKULASI PERSENTASE UNTUK GRAFIK PIE CSS DINA MIS
+  const persenTersedia = totalAlat > 0 ? Math.round((totalTersedia / totalAlat) * 100) : 0;
+  const persenMogok = totalAlat > 0 ? 100 - persenTersedia : 0;
+
   const handleExportPDF = () => {
-    // 1. Validasi jika data masih kosong
     if (!items || items.length === 0) {
       alert("Tidak ada data inventori yang bisa dicetak saat ini!");
       return;
@@ -59,8 +63,6 @@ function Inventory() {
 
     try {
       const doc = new jsPDF();
-      
-      // Desain Header Dokumen Laporan
       doc.setFont("helvetica", "bold");
       doc.setFontSize(18);
       doc.text("BEB PRODUCTION", 14, 20);
@@ -70,22 +72,19 @@ function Inventory() {
       doc.text("Laporan Resmi Data Inventori Logistik & Peralatan", 14, 26);
       doc.text(`Tanggal Cetak: ${new Date().toLocaleDateString('id-ID')}`, 14, 32);
       
-      // Membuat Garis Pembatas Estetis Merah
       doc.setLineWidth(0.5);
       doc.setDrawColor(239, 68, 68); 
       doc.line(14, 36, 196, 36);
 
-      // Pemetaan Data dengan ekstra proteksi jika ada kolom null di Supabase
       const tableRows = items.map((item) => [
         item.nama_alat ? item.nama_alat : '-',
         item.kategori ? item.kategori : 'General',
         item.jumlah ? `${item.jumlah} Unit` : '0 Unit',
-        item.status ? String(item.status).toUpperCase() : 'TERSEDIA' // Aman dari eror toUpperCase()
+        item.status ? String(item.status).toUpperCase() : 'TERSEDIA'
       ]);
 
-const tableHeaders = [['Nama Peralatan', 'Kategori', 'Kuantitas', 'Status Kondisi']];
+      const tableHeaders = [['Nama Peralatan', 'Kategori', 'Kuantitas', 'Status Kondisi']];
 
-      // 🟢 GANTI BAGIAN INI: Gunakan fungsi autoTable secara langsung
       autoTable(doc, {
         startY: 42,
         head: tableHeaders,
@@ -95,16 +94,12 @@ const tableHeaders = [['Nama Peralatan', 'Kategori', 'Kuantitas', 'Status Kondis
         alternateRowStyles: { fillColor: [248, 250, 252] }
       });
 
-      // Mengunduh File langsung ke laptop
       doc.save(`Laporan_Inventori_BEB_Production_${Date.now()}.pdf`);
-
     } catch (error) {
-      console.error("Detail Eror Cetak PDF:", error);
-      alert("Gagal mencetak PDF. Silakan cek tab Console untuk detail eror: " + error.message);
+      console.error(error);
     }
   };
 
-  // 2. CREATE: Fungsi Tambah Alat Baru
   const handleAddItem = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -125,14 +120,10 @@ const tableHeaders = [['Nama Peralatan', 'Kategori', 'Kuantitas', 'Status Kondis
       setJumlah(1);
       setStatus('tersedia');
       await refreshTableData();
-    } else {
-      console.error("Detail Error Supabase:", error.message);
-      alert("Gagal menyimpan data: " + error.message);
     }
     setLoading(false);
   };
 
-  // 3. UPDATE: Membuka Modal Edit & Mengisi Data Lama
   const openEditModal = (item) => {
     setEditingItem(item);
     setEditNamaAlat(item.nama_alat);
@@ -159,14 +150,10 @@ const tableHeaders = [['Nama Peralatan', 'Kategori', 'Kuantitas', 'Status Kondis
     if (!error) {
       setEditingItem(null);
       await refreshTableData();
-    } else {
-      console.error("Detail Error Update:", error.message);
-      alert("Gagal memperbarui data: " + error.message);
     }
     setLoading(false);
   };
 
-  // 4. DELETE: Fungsi Hapus Alat
   const handleDeleteItem = async (id) => {
     if (window.confirm('Apakah Anda yakin ingin menghapus alat ini?')) {
       const { error } = await supabase.from('inventory').delete().eq('id', id);
@@ -194,10 +181,27 @@ const tableHeaders = [['Nama Peralatan', 'Kategori', 'Kuantitas', 'Status Kondis
 
   return (
     <div className="d-flex min-vh-100" style={{ backgroundColor: '#111827' }}>
+      {/* SUNTIKAN CSS PREMIUM: HOVER TABEL LEMBUT & ANIMASI CARD */}
       <style>{`
         .custom-placeholder::placeholder {
           color: #94a3b8 !important;
           opacity: 1;
+        }
+        /* Efek Hover Lembut pada baris Tabel */
+        .table-hover tbody tr {
+          transition: background-color 0.25s ease, transform 0.2s ease;
+        }
+        .table-hover tbody tr:hover {
+          background-color: rgba(239, 68, 68, 0.05) !important;
+          cursor: pointer;
+        }
+        /* Efek hover pada Card Statistik */
+        .stat-card {
+          transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .stat-card:hover {
+          transform: translateY(-4px);
+          box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3) !important;
         }
       `}</style>
 
@@ -205,14 +209,12 @@ const tableHeaders = [['Nama Peralatan', 'Kategori', 'Kuantitas', 'Status Kondis
 
       <div className="flex-grow-1 p-4 text-white overflow-auto" style={{ maxHeight: '100vh' }}>
         
-        {/* Header Dashboard Dengan Tombol Cetak PDF */}
+        {/* Header Dashboard */}
         <div className="mb-4 pb-3 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3" style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
           <div>
             <h2 className="fw-bold m-0 text-white">Manajemen <span style={{ color: '#ef4444' }}>Inventori</span> Alat</h2>
-            <p className="m-0 mt-1" style={{ color: '#cbd5e1', fontSize: '14px' }}>Kelola, perbarui status, dan monitor seluruh perangkat produksi sikit BEB Production.</p>
+            <p className="m-0 mt-1" style={{ color: '#cbd5e1', fontSize: '14px' }}>Kelola, perbarui status, dan monitor seluruh perangkat produksi sirkuit BEB Production.</p>
           </div>
-          
-          {/* TOMBOL AKSI: CETAK PDF SEKARANG */}
           <div>
             <button 
               type="button"
@@ -226,10 +228,93 @@ const tableHeaders = [['Nama Peralatan', 'Kategori', 'Kuantitas', 'Status Kondis
           </div>
         </div>
 
+        {/* ==================== 🟢 SECTION BARU: CARD STATISTIK & PIE CHART ==================== */}
+        <div className="row g-4 mb-4">
+          {/* Card 1: Total Alat */}
+          <div className="col-md-3">
+            <div className="card stat-card h-100 border-0 rounded-4 text-white" style={{ background: '#1e293b', borderLeft: '5px solid #3b82f6 !important' }}>
+              <div className="card-body p-4 d-flex align-items-center justify-content-between">
+                <div>
+                  <small className="text-uppercase tracking-wider font-monospace" style={{ color: '#94a3b8', fontSize: '11px' }}>Total Seluruh Alat</small>
+                  <h2 className="fw-bold m-0 mt-1">{totalAlat} <span style={{ fontSize: '16px', fontWeight: 'normal', color: '#94a3b8' }}>Item</span></h2>
+                </div>
+                <div className="p-3 rounded-3 bg-primary bg-opacity-10 text-primary">
+                  <BsBoxSeam size={24} />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Card 2: Alat Tersedia */}
+          <div className="col-md-3">
+            <div className="card stat-card h-100 border-0 rounded-4 text-white" style={{ background: '#1e293b', borderLeft: '5px solid #10b981 !important' }}>
+              <div className="card-body p-4 d-flex align-items-center justify-content-between">
+                <div>
+                  <small className="text-uppercase tracking-wider font-monospace" style={{ color: '#94a3b8', fontSize: '11px' }}>Alat Siap/Tersedia</small>
+                  <h2 className="fw-bold text-success m-0 mt-1">{totalTersedia} <span style={{ fontSize: '16px', fontWeight: 'normal', color: '#94a3b8' }}>Unit</span></h2>
+                </div>
+                <div className="p-3 rounded-3 bg-success bg-opacity-10 text-success">
+                  <BsCheckCircleFill size={24} />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Card 3: Alat Rusak / Perbaikan */}
+          <div className="col-md-3">
+            <div className="card stat-card h-100 border-0 rounded-4 text-white" style={{ background: '#1e293b', borderLeft: '5px solid #ef4444 !important' }}>
+              <div className="card-body p-4 d-flex align-items-center justify-content-between">
+                <div>
+                  <small className="text-uppercase tracking-wider font-monospace" style={{ color: '#94a3b8', fontSize: '11px' }}>Mogok / Perbaikan / Rusak</small>
+                  <h2 className="fw-bold text-danger m-0 mt-1">{totalMogok} <span style={{ fontSize: '16px', fontWeight: 'normal', color: '#94a3b8' }}>Unit</span></h2>
+                </div>
+                <div className="p-3 rounded-3 bg-danger bg-opacity-10 text-danger">
+                  <BsExclamationTriangleFill size={24} />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Card 4: Grafik Lingkaran (Pie Chart CSS) */}
+          <div className="col-md-3">
+            <div className="card stat-card h-100 border-0 rounded-4 text-white" style={{ background: '#1e293b' }}>
+              <div className="card-body p-3 d-flex align-items-center gap-3">
+                {/* Lingkaran Grafik Menggunakan Conic Gradient */}
+                <div 
+                  className="rounded-circle flex-shrink-0 shadow-sm" 
+                  style={{ 
+                    width: '65px', 
+                    height: '65px', 
+                    background: totalAlat > 0 
+                      ? `conic-gradient(#10b981 0% ${persenTersedia}%, #ef4444 ${persenTersedia}% 100%)`
+                      : '#4b5563'
+                  }}
+                ></div>
+                <div>
+                  <h6 className="m-0 fw-bold small text-uppercase tracking-wider mb-1" style={{ color: '#ef4444' }}>
+                    <BsPieChartFill className="me-1" /> Kondisi Logistik
+                  </h6>
+                  <div className="d-flex flex-column gap-0.5" style={{ fontSize: '11px', color: '#cbd5e1' }}>
+                    <span className="d-flex align-items-center gap-1">
+                      <span className="badge bg-success p-1 rounded-circle" style={{ width: '6px', height: '6px' }}></span>
+                      Tersedia: {persenTersedia}%
+                    </span>
+                    <span className="d-flex align-items-center gap-1">
+                      <span className="badge bg-danger p-1 rounded-circle" style={{ width: '6px', height: '6px' }}></span>
+                      Bermasalah: {persenMogok}%
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        {/* ===================================================================================== */}
+
         {/* Card Form Tambah Alat */}
         <div className="card shadow border-0 mb-4 rounded-4 text-white" style={{ background: '#1e293b', border: '1px solid rgba(255,255,255,0.05)' }}>
           <div className="card-body p-4">
-            <h5 className="fw-bold mb-3 small text-uppercase tracking-wider" style={{ color: '#ef4444' }}>Tambah Peralatan Produksi</h5>
+            <h5 className="fw-bold mb-3 small text-uppercase tracking-wider" style={{ color: '#ef4444' }}>Tambah Peralatan Prosedur</h5>
             <form onSubmit={handleAddItem} className="row g-3 align-items-end">
               <div className="col-md-4">
                 <label className="form-label small fw-bold text-light">Nama Peralatan</label>
@@ -242,7 +327,6 @@ const tableHeaders = [['Nama Peralatan', 'Kategori', 'Kuantitas', 'Status Kondis
                   required
                 />
               </div>
-              
               <div className="col-md-3">
                 <label className="form-label small fw-bold text-light">Kategori Alat</label>
                 <input
@@ -254,7 +338,6 @@ const tableHeaders = [['Nama Peralatan', 'Kategori', 'Kuantitas', 'Status Kondis
                   required
                 />
               </div>
-
               <div className="col-md-2">
                 <label className="form-label small fw-bold text-light">Jumlah Unit</label>
                 <input
@@ -283,7 +366,7 @@ const tableHeaders = [['Nama Peralatan', 'Kategori', 'Kuantitas', 'Status Kondis
           </div>
         </div>
 
-        {/* Tabel Data Minimalis Terbuka */}
+        {/* Tabel Data Minimalis (Sudah Menggunakan Efek Hover CSS) */}
         <div className="card shadow border-0 rounded-4 overflow-hidden" style={{ background: '#1e293b' }}>
           <div className="card-body p-0">
             <div className="table-responsive">
@@ -347,18 +430,10 @@ const tableHeaders = [['Nama Peralatan', 'Kategori', 'Kuantitas', 'Status Kondis
                       <label className="form-label small fw-bold">Nama Peralatan</label>
                       <input type="text" className="form-control bg-dark text-white border-secondary" value={editNamaAlat} onChange={(e) => setEditNamaAlat(e.target.value)} required />
                     </div>
-                    
                     <div className="mb-3">
                       <label className="form-label small fw-bold">Kategori</label>
-                      <input 
-                        type="text" 
-                        className="form-control bg-dark text-white border-secondary" 
-                        value={editKategori} 
-                        onChange={(e) => setEditKategori(e.target.value)} 
-                        required 
-                      />
+                      <input type="text" className="form-control bg-dark text-white border-secondary" value={editKategori} onChange={(e) => setEditKategori(e.target.value)} required />
                     </div>
-
                     <div className="mb-3">
                       <label className="form-label small fw-bold">Jumlah Unit</label>
                       <input type="number" className="form-control bg-dark text-white border-secondary" min="1" value={editJumlah} onChange={(e) => setEditJumlah(e.target.value)} required />
