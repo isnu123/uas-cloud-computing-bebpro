@@ -56,6 +56,26 @@ function BookingCustomers() {
     }
   };
 
+  // Handler khusus untuk validasi ukuran file sebelum disimpan ke state
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    
+    if (file) {
+      const maxFileSize = 2 * 1024 * 1024; // 2 MB dalam satuan Bytes
+      
+      if (file.size > maxFileSize) {
+        // Jika file lebih dari 2 MB, tolak file dan tampilkan pesan error
+        setErrorMsg('Ukuran foto terlalu besar! Maksimal ukuran file adalah 2 MB. Silakan kompres atau kecilkan resolusi foto Anda terlebih dahulu.');
+        setBuktiBayarFile(null);
+        e.target.value = ''; // Mengosongkan form input
+      } else {
+        // Jika aman, hapus pesan error sebelumnya (jika ada) dan simpan file
+        setErrorMsg(null);
+        setBuktiBayarFile(file);
+      }
+    }
+  };
+
   // 2. Handler submit data & upload gambar ke Supabase Storage Bucket
   const handleBookingSubmit = async (e) => {
     e.preventDefault();
@@ -255,7 +275,7 @@ function BookingCustomers() {
 
                     <div className="mb-0">
                       <label className="form-label small fw-bold text-light"><BsCloudUpload className="me-2 text-danger" /> Unggah Foto Bukti Transfer (Wajib)</label>
-                      <input type="file" accept="image/*" className="form-control bg-dark text-white border-secondary rounded-3" onChange={(e) => setBuktiBayarFile(e.target.files[0])} required />
+                      <input type="file" accept="image/*" className="form-control bg-dark text-white border-secondary rounded-3" onChange={handleFileChange} required />
                     </div>
                   </div>
                 </div>
