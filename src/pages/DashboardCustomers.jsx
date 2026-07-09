@@ -457,7 +457,7 @@ function DashboardCustomers() {
             <p className="small mb-4" style={{ color: '#cbd5e1' }}>Mari transformasikan konsep acara luar biasa Anda menjadi mahakarya visual digital yang abadi.</p>
             <div className="d-flex justify-content-center gap-3 flex-wrap">
               <a 
-                href="https://wa.me/6281325555192" 
+                href="https://wa.me/6282225214426" 
                 className="btn btn-outline-light px-3 py-2 fw-bold d-flex align-items-center gap-2" 
                 style={{ borderRadius: '8px', transition: 'transform 0.2s ease' }}
                 target="_blank" 
