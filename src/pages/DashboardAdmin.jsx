@@ -16,7 +16,7 @@ function DashboardAdmin() {
   const [stats, setStats] = useState({ inventoryCount: 0, bookingCount: 0 });
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+useEffect(() => {
     const fetchAdminDashboardData = async () => {
       try {
         setLoading(true);
@@ -25,22 +25,33 @@ function DashboardAdmin() {
         if (user) {
           setUser(user);
 
-          // 2. Ambil hitungan baris (count) dari tabel inventory secara real-time
-          const { count: invCount, error: invError } = await supabase
+          // 2. Ambil HANYA kolom 'jumlah' dari tabel inventory untuk dihitung total unitnya
+          const { data: invData, error: invError } = await supabase
             .from('inventory')
-            .select('*', { count: 'exact', head: true });
+            .select('jumlah');
 
           // 3. Ambil hitungan baris (count) dari tabel bookings secara real-time
           const { count: bookCount, error: bookError } = await supabase
             .from('bookings')
             .select('*', { count: 'exact', head: true });
 
-          if (!invError && !bookError) {
-            setStats({
-              inventoryCount: invCount || 0,
-              bookingCount: bookCount || 0
-            });
+          // 4. Hitung total unit alat seperti di halaman Inventory
+          let totalInventori = 0;
+          if (!invError && invData) {
+            totalInventori = invData.reduce((acc, item) => acc + (parseInt(item.jumlah) || 0), 0);
+          } else if (invError) {
+            console.error("Gagal mengambil data inventory:", invError);
           }
+
+          if (bookError) {
+            console.error("Gagal mengambil data bookings:", bookError);
+          }
+
+          // 5. Update stats secara independen (tidak saling menggagalkan)
+          setStats({
+            inventoryCount: totalInventori,
+            bookingCount: bookCount || 0
+          });
         }
       } catch (error) {
         console.error("Gagal sinkronisasi data dashboard admin:", error);
