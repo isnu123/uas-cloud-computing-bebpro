@@ -495,9 +495,16 @@ function DashboardCustomers() {
           {/* HELPDESK FOOTER */}
           <div className="card p-3" style={{ backgroundColor: '#111827', border: '1px solid #374151', borderRadius: '16px' }}>
             <div className="d-flex align-items-start gap-3">
-              <BsChatLeftText size={20} style={{ color: '#ef4444', marginTop: '3px' }} />
+              {/* Menambahkan class flex-shrink-0 dan mengubah size ke 24 */}
+              <BsChatLeftText 
+                size={24} 
+                className="flex-shrink-0" 
+                style={{ color: '#ef4444', marginTop: '3px' }} 
+              />
               <div>
-                <h6 className="fw-bold text-white mb-1" style={{ fontSize: '14px' }}>Butuh Bantuan atau Kustomisasi Paket Jasa Khusus?</h6>
+                <h6 className="fw-bold text-white mb-1" style={{ fontSize: '14px' }}>
+                  Butuh Bantuan atau Kustomisasi Paket Jasa Khusus?
+                </h6>
                 <p className="m-0 small" style={{ color: '#cbd5e1', fontSize: '12px', lineHeight: '1.5' }}>
                   Apabila Anda memerlukan kustomisasi di luar paket standardisasi (seperti penambahan durasi tayang penyiaran, running text kustom OBS Studio, atau sewa peralatan hardware vMix), silakan hubungi admin helpdesk BEB Production melalui nomor tautan resmi di atas.
                 </p>
