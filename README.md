@@ -22,11 +22,14 @@ Sistem ini menerapkan mekanisme penanganan data asinkron langsung dari lapisan d
 
 ```mermaid
 graph TD
-    A[Pelanggan / Admin] -->|1. Input Data/Pesan| B(Frontend: React + Vite + .env)
-    B -->|2. Request Rekomendasi AI via API Key| C[Groq Cloud AI API]
-    C -->|3. Kirim Respons Jawaban Cerdas| B
-    B -->|4. Simpan Data Pelanggan + Hasil AI| D[(Database: Supabase)]
-    D -->|5. Trigger AFTER INSERT Aktif| E[SQL Function: http_request]
-    E -->|6. Kirim Payload JSON Lengkap| F[n8n Cloud Webhook Node]
-    F -->|7. Meneruskan Pesan Finisihing| G[n8n Telegram Node]
-    G -->|8. Notifikasi Ting!| H[Bot Telegram Admin BEB Production]
+    %% Jalur Modul AI Pelanggan
+    A[Pelanggan] -->|1. Konsultasi Acara| B(Web Vercel: Portal Pelanggan)
+    B -->|2. Request Prompt| C[Groq Cloud AI API]
+    C -->|3. Kirim Saran Paket| B
+    
+    %% Jalur Transaksi & Notifikasi Admin
+    B -->|4. Lanjutkan Booking & Simpan Data| D[(Database: Supabase)]
+    D -->|5. Trigger AFTER INSERT Aktif| E[SQL: http_request]
+    E -->|6. Kirim Payload JSON| F[n8n Cloud: Webhook Node]
+    F -->|7. Forward Notifikasi| G[n8n Cloud: Telegram Node]
+    G -->|8. Notifikasi Pesanan Masuk| H[Telegram Bot Admin]
