@@ -1,16 +1,30 @@
-# React + Vite
+# Rancang Bangun Sistem Informasi Manajemen Transaksi Jasa dan Inventaris pada BEB Production Berbasis Web
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Sistem Informasi Manajemen operasional yang dirancang khusus untuk **BEB Production** guna menangani pengelolaan transaksi pemesanan (*booking*) jasa digital media serta manajemen aset logistik/inventaris secara terintegrasi dan *real-time*.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## 🏗️ Arsitektur & Teknologi Sistem (Tech Stack)
 
-## React Compiler
+Aplikasi ini dibangun menggunakan arsitektur modern berbasis *Serverless Cloud Automation* untuk menjamin skalabilitas, kecepatan akses, serta stabilitas sistem 24/7 tanpa ketergantungan pada server lokal.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+*   **Frontend**: React.js (Vite) – Menyediakan antarmuka dashboard admin dan formulir pelanggan yang responsif, cepat, dan interaktif.
+*   **Deployment**: Vercel – Infrastruktur *cloud hosting* global untuk memastikan aplikasi frontend dapat diakses dengan performa tinggi.
+*   **Database**: Supabase (PostgreSQL) – Media penyimpanan basis data relasional yang andal dengan dukungan fitur *stored procedures* dan *database triggers*.
+*   **Automation Engine**: n8n Cloud – Platform integrasi workflow di awan yang bertindak sebagai *webhook handler* otomatis untuk meneruskan data ke ekosistem eksternal.
+*   **Notification Gateway**: Telegram Bot API – Media penyampaian notifikasi instan secara *real-time* kepada pihak manajemen BEB Production.
 
-## Expanding the ESLint configuration
+---
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## 🔄 Alur Kerja Otomasi Sistem (System Workflow)
+
+Sistem ini menerapkan mekanisme penanganan data asinkron langsung dari lapisan database (*database layer*) untuk memotong jalur birokrasi kodingan di sisi frontend.
+
+```mermaid
+graph TD
+    A[Pelanggan / Admin] -->|1. Input Form Booking| B(Frontend: React + Vite)
+    B -->|2. Insert Data Baru| C[(Database: Supabase)]
+    C -->|3. Trigger AFTER INSERT Aktif| D[SQL Function: http_request]
+    D -->|4. Kirim HTTP POST Payload JSON| E[n8n Cloud Webhook Node]
+    E -->|5. Eksekusi Workflow & Formatting| F[n8n Telegram Node]
+    F -->|6. Notifikasi Real-time Ting!| G[Bot Telegram Admin BEB Production]
