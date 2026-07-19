@@ -22,9 +22,10 @@ Sistem ini menerapkan mekanisme penanganan data asinkron langsung dari lapisan d
 
 ```mermaid
 graph TD
-    A[Pelanggan / Admin] -->|1. Input Form Booking| B(Frontend: React + Vite)
-    B -->|2. Insert Data Baru| C[(Database: Supabase)]
-    C -->|3. Trigger AFTER INSERT Aktif| D[SQL Function: http_request]
-    D -->|4. Kirim HTTP POST Payload JSON| E[n8n Cloud Webhook Node]
-    E -->|5. Eksekusi Workflow & Formatting| F[n8n Telegram Node]
-    F -->|6. Notifikasi Real-time Ting!| G[Bot Telegram Admin BEB Production]
+    A[Pelanggan / Admin] -->|1. Input Form/Pesan| B(Frontend: React + Vite)
+    B -->|2. Insert Data| C[(Database: Supabase)]
+    C -->|3. Trigger Aktif| D[SQL Function: http_request]
+    D -->|4. Kirim Payload JSON| E[n8n Cloud Webhook Node]
+    E -->|5. Minta Analisis & Rekomendasi| F[Groq AI API Node]
+    F -->|6. Kirim Teks Hasil AI| G[n8n Telegram Node]
+    G -->|7. Notifikasi & Jawaban Cerdas| H[Bot Telegram Admin/Pelanggan]
