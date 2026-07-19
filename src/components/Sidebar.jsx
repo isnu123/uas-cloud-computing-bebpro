@@ -116,7 +116,7 @@ function Sidebar({ onLogout }) {
       path: '/my-bookings',
       name: 'Riwayat',
       icon: <BsClipboardData size={18} />,
-      roles: ['admin', 'customer'],
+      roles: ['customer'], // ---> PERUBAHAN: 'admin' sudah dihapus dari array ini
     },
   ];
 
